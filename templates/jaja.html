@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>hello phaser!</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/2.6.2/phaser.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    </head>
+    <body>
+<script type="text/javascript">
+var playerId;
+var numeroDeJugador;
+$(document).ready(function(){
+    playerId = 0;
+    playerNum = 0;
+    gameReady = 'notReady';
+    alert("Offline start");
+    $.getJSON("http://192.168.3.109:5000/setId/", function(dataReturned){
+            numeroDeJugador = dataReturned['getPlayerNum'];
+            playerId = dataReturned['getPlayerId'];
+            //console.log("Player ID:" +playerId);
+            //console.log("Player Num:" +playerNum);
+            alert("Player ID: " + playerId + " | Player Num: " + numeroDeJugador);
+            //quitar lo d abajo
+            //numeroDeJugador = 2;
+        });
+
+    if(gameReady == 'notReady'){
+        $.getJSON("http://192.168.3.109:5000/gameReady/", function(dataReturned){
+            gameReady = dataReturned['game'];
+            //console.log("Game Ready?:" +gameReady);
+            do{
+                alert("Game Ready? " + gameReady);    
+            }while(gameReady == 'notReady')
+            $.post('http://192.168.3.109:5000/confirmedReady/', JSON.stringify({ 'confirmed': numeroDeJugador}), 
+            function(returnedData){
+            //console.log(returnedData);
+            }, 'json');
+        });
+
+        
+
+    } 
+});
+    window.onload = function() {
+
+       
+var game = new Phaser.Game(600, 500, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update});
+
+function preload() {
+    alert(window.location.href);
+    game.load.image('tank1', '/static/img/Tank_Blue_T.png');
+    game.load.image('tank2', '/static/img/Tank_Tan_T.png');
+    game.load.image('grass', '/static/img/backIce.jpg');
+    game.load.image('dirt', '/static/img/dirt.png');
+    game.load.image('ice', '/static/img/ice.png');
+    game.load.image('iceUp', '/static/img/iceStandUp.png');
+    game.load.image('barrelGreen', '/static/img/barrelGreen.png');
+    game.load.image('barrelGrey', '/static/img/barrelGrey.png');
+    game.load.image('laser', '/static/img/laser.png');
+    game.load.spritesheet('blueTank', '/static/img/tankBlueSpritesheet.png', 60, 60);
+    game.load.image('bullet', '/static/img/gun-fire.png');
+    game.load.image('miniBullet', '/static/img/miniBullet.png');
+    game.load.image('superBullet', '/static/img/superBullet.png');
+    game.load.image('hearth', '/static/img/hearth.png');
+
+}
+
+
+function create() {
+
+    this.stage.disableVisibilityChange = true;
+    //  We're going to be using physics, so enable the Arcade Physics system
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    //  A simple background for our game
+    var background = game.add.sprite(0, 0, 'grass');
+
+    //  The platforms group contains the ground and the 2 ledges we can jump on
+    platforms = game.add.group();
+
+    //  We will enable physics for any object that is created in this group
+    platforms.enableBody = true;
+
+    //  Our bullet group
+    miniBulletP1 = game.add.group();
+    miniBulletP1.enableBody = true;
+    miniBulletP1.physicsBodyType = Phaser.Physics.ARCADE;
+    miniBulletP1.createMultiple(30, 'miniBullet');
+    miniBulletP1.setAll('anchor.x', 0.5);
+    miniBulletP1.setAll('anchor.y', 1);
+    miniBulletP1.setAll('outOfBoundsKill', true);
+    miniBulletP1.setAll('checkWorldBounds', true);
+    miniBulletP1.player = 1;
+    miniBulletP1.power = 1;
+
+    //  Our bullet group
+    mediumBulletP1 = game.add.group();
+    mediumBulletP1.enableBody = true;
+    mediumBulletP1.physicsBodyType = Phaser.Physics.ARCADE;
+    mediumBulletP1.createMultiple(3, 'bullet');
+    mediumBulletP1.setAll('anchor.x', 0.5);
+    mediumBulletP1.setAll('anchor.y', 1);
+    mediumBulletP1.setAll('outOfBoundsKill', true);
+    mediumBulletP1.setAll('checkWorldBounds', true);
+    mediumBulletP1.player = 1;
+    mediumBulletP1.power = 2;
+
+    //  Our bullet group
+    superBulletP1 = game.add.group();
+    superBulletP1.enableBody = true;
+    superBulletP1.physicsBodyType = Phaser.Physics.ARCADE;
+    superBulletP1.createMultiple(1, 'superBullet');
+    superBulletP1.setAll('anchor.x', 0.5);
+    superBulletP1.setAll('anchor.y', 1);
+    superBulletP1.setAll('outOfBoundsKill', true);
+    superBulletP1.setAll('checkWorldBounds', true);
+    superBulletP1.player = 1;
+    superBulletP1.power = 4;
+
+    //  Our bullet group
+    miniBulletP2 = game.add.group();
+    miniBulletP2.enableBody = true;
+    miniBulletP2.physicsBodyType = Phaser.Physics.ARCADE;
+    miniBulletP2.createMultiple(30, 'miniBullet');
+    miniBulletP2.setAll('anchor.x', 0.5);
+    miniBulletP2.setAll('anchor.y', 1);
+    miniBulletP2.setAll('outOfBoundsKill', true);
+    miniBulletP2.setAll('checkWorldBounds', true);
+    miniBulletP2.player = 2;
+    miniBulletP2.power = 1;
+
+    //  Our bullet group
+    mediumBulletP2 = game.add.group();
+    mediumBulletP2.enableBody = true;
+    mediumBulletP2.physicsBodyType = Phaser.Physics.ARCADE;
+    mediumBulletP2.createMultiple(3, 'bullet');
+    mediumBulletP2.setAll('anchor.x', 0.5);
+    mediumBulletP2.setAll('anchor.y', 1);
+    mediumBulletP2.setAll('outOfBoundsKill', true);
+    mediumBulletP2.setAll('checkWorldBounds', true);
+    mediumBulletP2.player = 2;
+    mediumBulletP2.power = 2;
+
+    //  Our bullet group
+    superBulletP2 = game.add.group();
+    superBulletP2.enableBody = true;
+    superBulletP2.physicsBodyType = Phaser.Physics.ARCADE;
+    superBulletP2.createMultiple(1, 'superBullet');
+    superBulletP2.setAll('anchor.x', 0.5);
+    superBulletP2.setAll('anchor.y', 1);
+    superBulletP2.setAll('outOfBoundsKill', true);
+    superBulletP2.setAll('checkWorldBounds', true);
+    superBulletP2.player = 1;
+    superBulletP2.power = 4;
+
+    scoreText = game.add.text(16, 16, '', { fontSize: '32px', fill: '#000' });
+    tank1Text = game.add.text(102, game.world.height - 126, 'Player 1', { fontSize: '24px', fill: '#08006b' });
+    tank2Text = game.add.text(402, game.world.height - 126, 'Player 2', { fontSize: '24px', fill: '#6b0003' });
+    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+
+    //here is the top
+    for (var i = 0; i < 12; i++) {
+        
+        if(i==0){
+            for(var e = 0; e < 3; e++){
+                var initialBottomPlaftorm = platforms.create(50 * i, (game.world.height - 26) - (25)*(e+1) , 'ice');
+                initialBottomPlaftorm.scale.setTo(0.1,0.1);
+                initialBottomPlaftorm.body.immovable = true;
+            }
+        }
+        var top = platforms.create(50 * i, 0, 'ice');
+        var ground = platforms.create(50 * i, game.world.height - 126, 'ice');
+        var bottomPlatform = platforms.create(50 * i, game.world.height - 26, 'ice');
+        if(i==5 || i==6){
+            var middleBottomPlatform = platforms.create(50 * i, (game.world.height - 26) - 25 , 'ice');
+            var middleBottomPlatform3 = platforms.create(50 * i, (game.world.height - 26) - 75 , 'ice');
+            if(i==5){
+                var middleBottomPlatform2 = platforms.create((50 * i)+25, (game.world.height - 26) - 50 , 'ice');
+                middleBottomPlatform2.scale.setTo(0.1,0.1);
+                middleBottomPlatform2.body.immovable = true;
+            }
+            middleBottomPlatform.scale.setTo(0.1,0.1);
+            middleBottomPlatform.body.immovable = true;
+            middleBottomPlatform3.scale.setTo(0.1,0.1);
+            middleBottomPlatform3.body.immovable = true;
+        }
+        if (i==11){
+            top.scale.setTo(0.098, 0.1 );   
+            ground.scale.setTo(0.098, 0.1 ); 
+            bottomPlatform.scale.setTo(0.098, 0.1 ); 
+            for(var e = 0; e < 3; e++){
+                var finalBottomPlaftorm = platforms.create(50 * i, (game.world.height - 26) - (25)*(e+1) , 'ice');
+                finalBottomPlaftorm.scale.setTo(0.098,0.1);
+                finalBottomPlaftorm.body.immovable = true;
+            }
+        }else{
+            top.scale.setTo(0.1, 0.1 );
+            ground.scale.setTo(0.1, 0.1 );
+            bottomPlatform.scale.setTo(0.1, 0.1 );
+        }
+        top.body.immovable = true;
+        ground.body.immovable = true;
+        bottomPlatform.body.immovable = true;
+    }
+    //now here we finish the top
+
+    //here we start the ledges
+
+    //ledge 1 from top
+    ledge = platforms.create(0, 200, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 300, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(50, 300, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(50, 200, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(100, 25, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(100, 75, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    //ssss
+    ledge = platforms.create(0, 25, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 75, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 125, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 175, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 225, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 275, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(0, 325, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    //ledge 2 from middle to bottom
+
+    ledge = platforms.create(175, 75, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(175, 125, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(200, 125, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(250, 125, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(250, 200, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(300, 200, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(350, 200, 'ice');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(375, 150, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(375, 100, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(175, 175, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(175, 325, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(275, 325, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(275, 275, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(500, 275, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(500, 325, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(475, 125, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(550, 150, 'ice');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(475, 75, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+    //atras
+
+    ledge = platforms.create(575, 25, 'iceUp');
+    ledge.scale.setTo(0.098,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(575, 75, 'iceUp');
+    ledge.scale.setTo(0.098,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(575, 125, 'iceUp');
+    ledge.scale.setTo(0.098,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(575, 175, 'iceUp');
+    ledge.scale.setTo(0.098,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(575, 225, 'iceUp');
+    ledge.scale.setTo(0.098,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(575, 275, 'iceUp');
+    ledge.scale.setTo(0.098,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(575, 325, 'iceUp');
+    ledge.scale.setTo(0.098,0.098);
+    ledge.body.immovable = true;
+
+    // The player and its settings
+    player1 = game.add.sprite(tank1.defaultX, tank1.defaultY, 'blueTank');
+    player1.scale.setTo(0.6,0.6);
+
+    player2 = game.add.sprite(tank2.defaultX, tank2.defaultY, 'blueTank');
+    player2.scale.setTo(0.6,0.6);
+
+    //  We need to enable physics on the player
+    game.physics.arcade.enable(player1);
+    game.physics.arcade.enable(player2);
+
+    //  Player physics properties. Give the little guy a slight bounce.
+    //player.body.bounce.y = 0.2;
+    //player.body.gravity.y = 300;
+    player1.body.collideWorldBounds = true;
+    player2.body.collideWorldBounds = true;
+
+    player1.player = 1;
+
+    player2.player = 2;
+    player2.angle = 90;
+
+
+
+    //var tank = game.add.sprite(0, 0, 'tank1');
+    //tank.scale.setTo(0.1,0.1);
+
+    cursors = game.input.keyboard.createCursorKeys();
+    fire1ButtonP1 = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    fire2ButtonP1 = game.input.keyboard.addKey(Phaser.Keyboard.M);
+    fire3ButtonP1 = game.input.keyboard.addKey(Phaser.Keyboard.N);
+    fire1ButtonP2 = game.input.keyboard.addKey(Phaser.Keyboard.R);
+    fire2ButtonP2 = game.input.keyboard.addKey(Phaser.Keyboard.T);
+    fire3ButtonP2 = game.input.keyboard.addKey(Phaser.Keyboard.Y);
+
+
+
+    hearthsP1 = game.add.group();
+    hearthsP1.enableBody = true;
+    hearthsP2 = game.add.group();
+    hearthsP2.enableBody = true;
+
+
+    //  Here we'll create 12 of them evenly spaced apart
+    for (var i = 0; i < 4; i++)
+    {
+        //  Create a star inside of the 'stars' group
+        var hearth = hearthsP1.create(55 * (i+1), game.world.height-96, 'hearth');
+
+
+        //  Let gravity do its thing
+        hearth.body.gravity.y = 60;
+
+        hearth.scale.setTo(0.5,0.5);
+        //  This just gives each star a slightly random bounce value
+        hearth.body.bounce.y = 0.7 + Math.random() * 0.2;
+    }
+
+    for (var i = 4; i < 8; i++){
+        var hearth = hearthsP2.create((55 * (i+1))+90, game.world.height-96, 'hearth');
+         //  Let gravity do its thing
+        hearth.body.gravity.y = 60;
+
+        hearth.scale.setTo(0.5,0.5);
+        //  This just gives each star a slightly random bounce value
+        hearth.body.bounce.y = 0.7 + Math.random() * 0.2;
+    }
+
+    player1.anchor.setTo(0.5, 0.5);
+    player2.anchor.setTo(0.5, 0.5);
+    stateText = game.add.text(125,game.world.height-300,' ', { font: '50px Arial', fill: '#fff' });
+
+}
+var score = 0;
+var scoreText;
+var tank1 = {
+    player : 1,
+    life : 4,
+    superShot : 1,
+    mediumShot : 3,
+    defaultX : 50,
+    defaultY : 350,
+    direction : 0,
+    moveRight : false,
+    moveDown : false,
+    moveUp : false,
+    moveLeft : false,
+    x : 0,
+    y : 0,
+};
+var tank2 = {
+    player : 2,
+    life :  4,
+    superShot : 1,
+    mediumShot : 3,
+    defaultX : 500,
+    defaultY : 50 ,
+    direction : 0,
+    moveRight : false,
+    moveDown : false,
+    moveUp : false,
+    moveLeft : false,
+    x : 0,
+    y : 0,
+}
+var directionP2 = "left";
+var directionP1 = "right";
+var bulletTimeP1 = 0;
+var bulletTimeP2 = 0;
+var stateText;
+var direction = "";
+time = 0.250;
+var hitPlatformP1 = false;
+var hitPlatformP2 = false;
+setInterval(onlinePlay1, 75);
+
+function onlinePlay1(){
+    //console.log("the time is: "+time);
+    time += 0.100;
+    $(document).ready(function(){
+    //$.getJSON("http://192.168.3.102:5000/getP2PositionGet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+    //        tank2.x = data;
+            //console.log("Has to be p2 X pos: "+tank2.x);
+    //});
+    if (numeroDeJugador == 1) {
+        $.getJSON("http://192.168.3.109:5000/getP1PositionSet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+            //if(directionP1 == 'right' || directionP1 == 'left'){
+                if(player1.x - tank1.x > -3 || player1.x - tank1.x < 3){
+                    tank1.x = data['x'];
+                }
+
+                if(player1.y - tank1.y > -3 || player1.y - tank1.y < 3){
+                    tank1.y = data['y'];
+                }
+           // } else{
+          //  }
+            //console.log(player1.y);
+            //console.log("Has to be p1 X pos: "+tank1.x);
+        });
+        $.getJSON("http://192.168.3.109:5000/getP2PositionGet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+            tank2.x = data['x'];
+            tank2.y = data['y'];
+            //alert('Y: '+tank1.y + ' PLAYER IS '+player1.y);
+            //alert('X: '+tank1.x+ ' PLAYER IS '+player1.x);
+            //if (directionP1 == 'up' || directionP1 == 'down'){
+            //    player1.x = data['x'];
+            //}
+            //alert(tank1.y);
+            //console.log("Has to be p1 X pos: "+tank1.x);
+            tank2.moveRight = false;
+            tank2.moveLeft = false;
+            tank2.moveDown = false;
+            tank2.moveUp = false;
+         });
+    } 
+    if(numeroDeJugador == 2){
+        $.getJSON("http://192.168.3.109:5000/getP2PositionSet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+            //if(directionP1 == 'right' || directionP1 == 'left'){
+                if(player2.x - tank2.x > -3 || player2.x - tank2.x < 3){
+                    tank2.x = data['x'];
+                }
+
+                if(player2.y - tank2.y > -3 || player2.y - tank2.y < 3){
+                    tank2.y = data['y'];
+                }
+           // } else{
+          //  }
+            //console.log(player1.y);
+            //console.log("Has to be p1 X pos: "+tank1.x);
+        });
+        $.getJSON("http://192.168.3.109:5000/getP1PositionGet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+            tank1.x = data['x'];
+            tank1.y = data['y'];
+            //alert('Y: '+tank1.y + ' PLAYER IS '+player1.y);
+            //alert('X: '+tank1.x+ ' PLAYER IS '+player1.x);
+            //if (directionP1 == 'up' || directionP1 == 'down'){
+            //    player1.x = data['x'];
+            //}
+            //alert(tank1.y);
+            //console.log("Has to be p1 X pos: "+tank1.x);
+            tank1.moveRight = false;
+            tank1.moveLeft = false;
+            tank1.moveDown = false;
+            tank1.moveUp = false;
+         });
+    }
+    
+    $.getJSON("http://192.168.3.109:5000/gunShot/", function(data, status){
+        if (data['fire1ButtonP1'] == 1){
+            
+            if(tank1.superShot > 0){
+                fire3ButtonP1.isDown = true;
+            } else if (tank1.mediumShot > 0){
+                fire2ButtonP1.isDown = true;
+            }else{
+                fire1ButtonP1.isDown = true;
+            }
+        }else{
+            fire1ButtonP1.isDown = false;
+            fire2ButtonP1.isDown = false;
+            fire3ButtonP1.isDown = false;
+        }
+
+        if (data['fire1ButtonP2'] == 1){
+            if(tank2.superShot > 0){
+                fire3ButtonP2.isDown = true;
+            } else if (tank2.mediumShot > 0){
+                fire2ButtonP2.isDown = true;
+            }else{
+                fire1ButtonP2.isDown = true;
+            }
+        }else{
+            fire1ButtonP2.isDown = false;
+            fire2ButtonP2.isDown = false;
+            fire3ButtonP2.isDown = false;
+        }
+    });
+
+    if(hitPlatformP1 && numeroDeJugador == 1){
+        //alert("PEGO PEGO PEGO");
+        //alert(hitPlatformP1);
+        $.post('http://192.168.3.109:5000/hitPlatformP1/', JSON.stringify({ 'direction': directionP1, 'x' : player1.x, 'y' : player1.y}), 
+        function(returnedData){
+        //console.log(returnedData);
+        }, 'json');
+        $.getJSON("http://192.168.3.109:5000/getP1PositionSet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+            tank1.x = data['x'];
+            tank1.y = data['y'];
+            //alert('Y: '+tank1.y + ' PLAYER IS '+player1.y);
+            //alert('X: '+tank1.x+ ' PLAYER IS '+player1.x);
+            //if (directionP1 == 'up' || directionP1 == 'down'){
+            //    player1.x = data['x'];
+            //}
+            //alert(tank1.y);
+            //console.log("Has to be p1 X pos: "+tank1.x);
+            tank1.moveRight = false;
+            tank1.moveLeft = false;
+            tank1.moveDown = false;
+            tank1.moveUp = false;
+         });
+    }
+    if(hitPlatformP2 && numeroDeJugador == 2){
+        //alert("PEGO PEGO PEGO");
+        //alert(hitPlatformP1);
+        $.post('http://192.168.3.109:5000/hitPlatformP2/', JSON.stringify({ 'direction': directionP2, 'x' : player2.x, 'y' : player2.y}), 
+        function(returnedData){
+        //console.log(returnedData);
+        }, 'json');
+        $.getJSON("http://192.168.3.109:5000/getP2PositionSet/", function(data, status){
+            //alert("Data: " + data + "\nStatus: " + status);
+            tank2.x = data['x'];
+            tank2.y = data['y'];
+            //alert('Y: '+tank1.y + ' PLAYER IS '+player1.y);
+            //alert('X: '+tank1.x+ ' PLAYER IS '+player1.x);
+            //if (directionP1 == 'up' || directionP1 == 'down'){
+            //    player1.x = data['x'];
+            //}
+            //alert(tank1.y);
+            //console.log("Has to be p1 X pos: "+tank1.x);
+            tank2.moveRight = false;
+            tank2.moveLeft = false;
+            tank2.moveDown = false;
+            tank2.moveUp = false;
+         });
+    }   
+
+});
+    //termina JQUERY
+    //player1.x = x;
+    //console.log("Current p2 X pos: "+player2.x);
+    //console.log("Current p1 X pos: "+player1.x);
+    /*if(directionP2 == 'left'){
+        player1.angle = 180;
+        directionP1 = directionP2;
+    }else if(directionP2 == 'right'){
+        player1.angle = 0;
+        directionP1 = directionP2;
+    }*/
+
+    
+}
+
+function update() {
+    //  Collide the player and the stars with the platforms
+    hitPlatformP1 = game.physics.arcade.collide(player1, platforms);
+    hitPlatformP2 = game.physics.arcade.collide(player2, platforms);
+    var touchesHearthP1 = game.physics.arcade.collide(hearthsP1, platforms);
+    var touchesHearthP2 = game.physics.arcade.collide(hearthsP2, platforms);
+
+    
+    //var touchesStar = game.physics.arcade.collide(player1, player2);
+     //  Reset the players velocity (movement)
+    //player.body.velocity.x = 0;
+    //player.body.velocity.y = 0;
+    //console.log(playerId); 
+    //  Reset the player, then check for movement keys
+    player1.body.velocity.setTo(0, 0);
+    player2.body.velocity.setTo(0, 0);
+    //game.physics.arcade.overlap(player1, stars, collectStar, null, this);
+    game.physics.arcade.overlap([miniBulletP1, mediumBulletP1, superBulletP1], platforms, destroyBullet, null, this);
+    game.physics.arcade.overlap([miniBulletP2, mediumBulletP2, superBulletP2], platforms, destroyBullet, null, this);
+    game.physics.arcade.overlap([miniBulletP1, mediumBulletP1, superBulletP1], player2, destroyTank2, null, this);
+    game.physics.arcade.overlap([miniBulletP2, mediumBulletP2, superBulletP2], player1, destroyTank1, null, this);
+    //game.physics.arcade.overlap([miniBulletP2], miniBulletP1, destroyDoubleBullet, null, this);
+    //game.physics.arcade.overlap(player1, player2, destroyBullet, null, this);
+    
+        //directionP1 = controlsP1(directionP1);
+    
+        //directionP2 = controlsP2(directionP2);
+    
+    /*if(player2.x < tank2.x && (player2.x - tank2.x) < -3 && (player2.x - tank2.x) > 3 ){
+        tank2.moveRight = true;
+        tank2.moveLeft = false;
+        tank1.moveDown = false;
+        tank1.moveUp = false;
+        //console.log("LLEGUE");
+    }else if (player2.x > tank2.x && (player2.x - tank2.x) > -3 && (player2.x - tank2.x) < 3){
+        tank2.moveRight = false;
+        tank2.moveLeft = true;
+        tank1.moveDown = false;
+        tank1.moveUp = false;
+        //console.log("NO LLEGUE");
+    }*/
+
+    if(numeroDeJugador == 1 || numeroDeJugador == 2){
+        //movimiento de servidor de p1
+        if(player1.x < tank1.x && ((player1.x - tank1.x) < -13 || (player1.x - tank1.x) > 13 )){
+            tank1.moveRight = true;
+            tank1.moveLeft = false;
+            tank1.moveDown = false;
+            tank1.moveUp = false;
+            directionP1 = controlsP1(directionP1);
+            //console.log("LLEGUE X P1");
+        }else if (player1.x > tank1.x && ((player1.x - tank1.x) > -13 || (player1.x - tank1.x) < 13)){
+            tank1.moveRight = false;
+            tank1.moveLeft = true;
+            tank1.moveDown = false;
+            tank1.moveUp = false;
+            //console.log("NO LLEGUE X P1");
+            directionP1 = controlsP1(directionP1);
+        }else if(player1.y < tank1.y && ((player1.y - tank1.y) > -13 || (player1.y - tank1.y) < 13)){
+            tank1.moveRight = false;
+            tank1.moveLeft = false;
+            tank1.moveDown = true;
+            tank1.moveUp = false;
+            directionP1 = controlsP1(directionP1);
+            //alert("LLEGUE Y P1");
+        }else if (player1.y > tank1.y && ((player1.y - tank1.y) > -13 || (player1.y - tank1.y) < 13)){
+            tank1.moveRight = false;
+            tank1.moveLeft = false;
+            tank1.moveDown = false;
+            tank1.moveUp = true;
+            directionP1 = controlsP1(directionP1);
+            //alert("NO LLEGUE Y P1");
+        }//fin p1
+    }
+    
+
+    if(numeroDeJugador ==2 || numeroDeJugador == 1){
+        //movimiento de servidor de p2
+        if(player2.x < tank2.x && ((player2.x - tank2.x) < -13 || (player2.x - tank2.x) > 13 )){
+            tank2.moveRight = true;
+            tank2.moveLeft = false;
+            tank2.moveDown = false;
+            tank2.moveUp = false;
+            directionP2 = controlsP2(directionP2);
+            //console.log("LLEGUE X P1");
+        }else if (player2.x > tank2.x && ((player2.x - tank2.x) > -13 || (player2.x - tank2.x) < 13)){
+            tank2.moveRight = false;
+            tank2.moveLeft = true;
+            tank2.moveDown = false;
+            tank2.moveUp = false;
+            //console.log("NO LLEGUE X P1");
+            directionP2 = controlsP2(directionP2);
+        }else if(player2.y < tank2.y && ((player2.y - tank2.y) > -13 || (player2.y - tank2.y) < 13)){
+            tank2.moveRight = false;
+            tank2.moveLeft = false;
+            tank2.moveDown = true;
+            tank2.moveUp = false;
+            directionP2 = controlsP2(directionP2);
+            //alert("LLEGUE Y P1");
+        }else if (player2.y > tank2.y && ((player2.y - tank2.y) > -13 || (player2.y - tank2.y) < 13)){
+            tank2.moveRight = false;
+            tank2.moveLeft = false;
+            tank2.moveDown = false;
+            tank2.moveUp = true;
+            directionP2 = controlsP2(directionP2);
+            //alert("NO LLEGUE Y P1");
+        }//fin p2
+    }
+    
+
+    //tiene q ser tank, disparo automatico de player 1
+    /*if(player2.y - player1.y > -3 && player2.y - player1.y < 3){
+        fire1ButtonP1.isDown = true;
+    }else if(player2.x - player1.y > -3 && player2.x - player1.y < 3){
+        fire1ButtonP1.isDown = true;
+    } else {
+        fire1ButtonP1.isDown = false;
+    }
+
+    if(player1.y - player2.y > -3 && player1.y - player2.y < 3){
+        fire1ButtonP2.isDown = true;
+    }else if(player1.x - player2.y > -3 && player1.x - player2.y < 3){
+        fire1ButtonP2.isDown = true;
+    } else {
+        fire1ButtonP2.isDown = false;
+    }*/
+
+    if (fire1ButtonP1.isDown){
+        fireP1(1,directionP1);
+    }
+    if(fire1ButtonP2.isDown){
+        fireP2(1,directionP2);
+    }
+    if (fire2ButtonP1.isDown/* && tank1.mediumShot > 0*/){
+        fireP1(2,directionP1);
+    }
+    if(fire2ButtonP2.isDown){
+        fireP2(2,directionP2);
+    }
+    if (fire3ButtonP1.isDown){
+        fireP1(4,directionP1);
+    }
+    if(fire3ButtonP2.isDown){
+        fireP2(4,directionP2);
+    }
+    if(tank1.life <= 0 || tank2.life <= 0){
+        endMatch();
+    }
+
+}
+
+//
+//function collectStar (player, star) {
+
+    // Removes the star from the screen
+    //star.kill();
+
+    //  Add and update the score
+    //score += 10;
+    //scoreText.text = 'score: ' + score;
+
+//}
+
+function destroyTank2(player, bullets ){
+    if(game.physics.arcade.collide(bullets, player)){
+        tank2.life -= bullets.power;
+        for(var counter = 0; counter < bullets.power; counter++){
+            hearth = hearthsP2.cursor;
+            hearth.kill();
+            hearth = hearthsP2.next();
+        }
+        if(tank2.life < 1){
+            player2.kill();    
+        }
+
+    }
+    bullets.kill();
+}
+
+function destroyDoubleBullet(bullet2,bullet1){
+    if(game.physics.arcade.collide(bullet2, bullet1)){
+        bullet2.kill();
+        bullet1.kill();
+    }
+}
+
+function destroyTank1(player, bullets ){
+    if(game.physics.arcade.collide(bullets, player)){
+        tank1.life -= bullets.power;
+        for(var counter = 0; counter < bullets.power; counter++){
+            hearth = hearthsP1.cursor;
+            hearth.kill();
+            hearth = hearthsP1.next();
+        }
+        if(tank1.life < 1){
+            player1.kill();    
+        }
+
+    }
+    bullets.kill();
+}
+
+function destroyBullet(bullets, platforms){
+    bullets.kill();
+}
+
+function controlsP1(lastPosition){
+
+    if (tank1.moveLeft)    
+    {
+        //  Move to the left
+        player1.body.velocity.x = -100;
+        player1.angle = 180;
+        direction = "left";
+    }
+    else if (tank1.moveRight)
+    {
+        //  Move to the right
+        player1.body.velocity.x = 100;
+        player1.angle = 0;
+        //player1.animations.play('right');
+        direction = "right";
+    }
+    else if (tank1.moveUp)
+    {
+        //  Move up
+        //alert('moving up');
+        player1.body.velocity.y = -100;
+        player1.angle = 270;
+        //player1.animations.play('up');
+        direction = "up";
+    }
+    else if (tank1.moveDown)
+    {
+        //  Move down
+        //alert('moving down');
+        player1.body.velocity.y = 100;
+        player1.angle = 90;
+        //player1.animations.play('down');
+        direction = "down";
+    }
+    else
+    {
+        //  Stand still
+        alert('okokok');
+        player1.animations.stop();
+        direction = lastPosition;
+        player1.frame = 4;
+    }
+    return direction;
+}
+
+function controlsP2(lastPosition){
+    if(player2.alive){
+
+    if (tank2.moveLeft)    
+    {
+        //  Move to the left
+        player2.body.velocity.x = -100;
+        player2.angle = 180;
+        //console.log(player2.x);
+        direction = "left";
+    }
+    else if (tank2.moveRight)
+    {
+        //  Move to the right
+        player2.body.velocity.x = 100;
+        player2.angle = 0;
+        direction = "right";
+    }
+    else if (tank2.moveUp)
+    {
+        //  Move up
+        //alert('moving up');
+        player2.body.velocity.y = -100;
+        player2.angle = 270;
+        direction = "up";
+    }
+    else if (tank2.moveDown)
+    {
+        //  Move down
+        //alert('moving down');
+        player2.body.velocity.y = 100;
+        player2.angle = 90;
+        direction = "down";
+    }
+    else
+    {
+        //  Stand still
+        //player2.animations.stop();
+        direction = lastPosition;
+        player2.frame = 4;
+    }
+    }
+    //post a la base de datos con direccion
+    //console.log(direction);
+    return direction;
+}
+
+
+function fireP1 (bulletType, direction) {
+
+    if(player1.alive){
+            //  To avoid them being allowed to fire too fast we set a time limit
+        if (game.time.now > bulletTimeP1)
+        {
+            //  Grab the first bullet we can from the pool
+            //bullet = bulletsUp.getFirstExists(false);
+            if(bulletType == 1){
+                bullet = miniBulletP1.getFirstExists(false);
+                bullet.power = 1;
+            } else if (bulletType == 2){
+                bullet = mediumBulletP1.getFirstExists(false);
+                tank1.mediumShot--;
+                bullet.power = 2;
+            } else if (bulletType == 4){
+                bullet = superBulletP1.getFirstExists(false);
+                tank1.superShot--;
+                bullet.power = 4;
+            }
+            bullet.anchor.setTo(0.5,0.5);
+            if (true)
+            {
+                if(direction=="left"){
+                    bullet.reset(player1.x + 0, player1.y + 2);
+                    bullet.angle = 180;
+                    bullet.body.velocity.x = -200; 
+               } else if (direction=="up"){
+                    bullet.reset(player1.x - 2, player1.y + 0);
+                    bullet.angle = 270;
+                    bullet.body.velocity.y = -200; 
+               } else if (direction=="right"){
+                    bullet.reset(player1.x + 0, player1.y - 2);
+                    bullet.angle = 0;
+                    bullet.body.velocity.x = 200; 
+               } else if (direction=="down"){
+                    bullet.reset(player1.x + 2, player1.y + 0);
+                    bullet.angle = 90;
+                    bullet.body.velocity.y = 200; 
+               } else {
+                    bullet.angle = 0;
+                    bullet.body.velocity.x = 200; 
+               }
+                bulletTimeP1 = game.time.now + 300;
+            }
+        }
+
+    }
+    
+}
+
+
+
+function fireP2 (bulletType, direction) {
+    if(player2.alive){
+        //  To avoid them being allowed to fire too fast we set a time limit
+    if (game.time.now > bulletTimeP2)
+    {
+        //  Grab the first bullet we can from the pool
+        //bullet = bulletsUp.getFirstExists(false);
+        if(bulletType == 1){
+                bullet = miniBulletP2.getFirstExists(false);
+                bullet.power = 1;
+            } else if (bulletType == 2){
+                bullet = mediumBulletP2.getFirstExists(false);
+                tank2.mediumShot--;
+                bullet.power = 2;
+            } else if (bulletType == 4){
+                bullet = superBulletP2.getFirstExists(false);
+                tank2.superShot--;
+                bullet.power = 4;
+            }
+        bullet.anchor.setTo(0.5,0.5);
+        if (true)
+        {
+            if(direction=="left"){
+                bullet.reset(player2.x + 0, player2.y + 2);
+                bullet.angle = 180;
+                bullet.body.velocity.x = -200; 
+           } else if (direction=="up"){
+                bullet.reset(player2.x - 2, player2.y + 0);
+                bullet.angle = 270;
+                bullet.body.velocity.y = -200; 
+           } else if (direction=="right"){
+                bullet.reset(player2.x + 0, player2.y - 2);
+                bullet.angle = 0;
+                bullet.body.velocity.x = 200; 
+           } else if (direction=="down"){
+                bullet.reset(player2.x + 2, player2.y + 0);
+                bullet.angle = 90;
+                bullet.body.velocity.y = 200; 
+           } else {
+                bullet.angle = 0;
+                bullet.body.velocity.x = 200; 
+           }
+            bulletTimeP2 = game.time.now + 300;
+        }
+    }
+
+    }
+    
+}
+
+function endMatch(){
+    if (player1.alive){
+        scoreText.text = 'P1 Won!';
+    } else if (player2.alive){
+        scoreText.text = 'P2 Won!';
+    } else{
+        scoreText.text = 'There is a tie!';
+    }
+
+    stateText.text=" GAME OVER \n Click to restart";
+    stateText.visible = true;
+
+        //the "click to restart" handler
+    game.input.onTap.addOnce(restart,this);
+}
+
+function restart(){
+    //  A new level starts
+    
+    //resets the life count
+   // miniBulletP1.callAll('revive');
+    //miniBulletP2.callAll('revive');
+   // mediumBulletP1.callAll('revive');
+   // mediumBulletP2.callAll('revive');
+   // superBulletP1.callAll('revive');
+    //superBulletP2.callAll('revive');
+    scoreText.text = '';
+    miniBulletP1.removeAll();
+    miniBulletP1.createMultiple(30, 'miniBullet');
+    miniBulletP2.removeAll();
+    miniBulletP2.createMultiple(30, 'miniBullet');
+    mediumBulletP1.removeAll();
+    mediumBulletP1.createMultiple(3, 'bullet');
+    mediumBulletP2.removeAll();
+    mediumBulletP2.createMultiple(3, 'bullet');
+    superBulletP1.removeAll();
+    superBulletP1.createMultiple(1, 'superBullet');
+    superBulletP2.removeAll();
+    superBulletP2.createMultiple(1, 'superBullet');
+
+
+    //revives the player
+    hitPlatformP1 = true;
+    player1.revive();
+    player1.x = tank1.defaultX;
+    player1.y = tank1.defaultY;
+    player2.revive();
+    player2.x = tank2.defaultX;
+    player2.y = tank2.defaultY;
+    hearthsP1.callAll('revive');
+    hearthsP2.callAll('revive');
+    tank1 = {
+        player : 1,
+        life : 4,
+        superShot : 1,
+        mediumShot : 3,
+        defaultX : 50,
+        defaultY : 350,
+        direction : 0,
+        moveRight : false,
+        moveDown : false,
+        moveUp : false,
+        moveLeft : false,
+        x : 0,
+        y : 0,
+    };
+    tank2 = {
+        player : 2,
+        life :  4,
+        superShot : 1,
+        mediumShot : 3,
+        defaultX : tank2.defaultX,
+        defaultY : tank2.defaultY,
+        direction : 0,
+        moveRight : false,
+        moveDown : false,
+        moveUp : false,
+        moveLeft : false,
+        x : 0,
+        y : 0,
+    }
+
+    //hides the text
+    stateText.visible = false;
+}
+
+    };
+
+    </script>
+
+    </body>
+</html>

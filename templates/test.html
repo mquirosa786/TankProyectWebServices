@@ -1,0 +1,438 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>hello phaser!</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/2.6.2/phaser.js"></script>
+    </head>
+    <body>
+
+    <script type="text/javascript">
+
+    window.onload = function() {
+
+        
+var game = new Phaser.Game(600, 400, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update});
+
+function preload() {
+    game.load.image('tank1', 'Tank_Blue_T.png');
+    game.load.image('tank2', 'Tank_Tan_T.png');
+    game.load.image('grass', 'grass.png');
+    game.load.image('dirt', 'dirt.png');
+    game.load.image('ice', 'ice.png');
+    game.load.image('iceUp', 'iceStandUp.png');
+    game.load.image('barrelGreen', 'barrelGreen.png');
+    game.load.image('barrelGrey', 'barrelGrey.png');
+    game.load.image('laser', 'laser.png');
+    game.load.spritesheet('blueTank', 'tankBlueSpritesheet.png', 60, 60);
+    game.load.image('bullet', 'gun-fire.png');
+    game.load.image('bulletUp', 'gun-fireUp.png');
+    game.load.image('bulletDown', 'gun-fireDown.png');
+    game.load.image('bulletLeft', 'gun-fireL.png');
+
+}
+
+
+function create() {
+    //  We're going to be using physics, so enable the Arcade Physics system
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    //  A simple background for our game
+    var background = game.add.sprite(0, 0, 'grass');
+    background.scale.setTo(5,5)
+
+    //  The platforms group contains the ground and the 2 ledges we can jump on
+    platforms = game.add.group();
+
+    //  We will enable physics for any object that is created in this group
+    platforms.enableBody = true;
+
+    function hey(playern){
+        this.enableBody = true;
+        this.physicsBodyType = Phaser.Physics.ARCADE;
+        this.p = 1;
+        this.createMultiple(30, 'bullet');
+        this.setAll('anchor.x', 0.5);
+        this.setAll('anchor.y', 1);
+        this.setAll('outOfBoundsKill', true);
+        this.setAll('checkWorldBounds', true);
+        this.player = playern;
+    }
+    //  Our bullet group
+    var bulletsP1 = new hey(1);
+    bulletsP1 = game.add.group();
+    //bulletsP2 = bulletsP1;
+    //bulletsP2.p = 2;
+    //console.log(bulletsP1.p);
+    console.log(bulletsP1.player);
+    //  Our bullet group
+    bulletsUpP1 = game.add.group();
+    bulletsUpP1.enableBody = true;
+    bulletsUpP1.physicsBodyType = Phaser.Physics.ARCADE;
+    bulletsUpP1.createMultiple(30, 'bulletUp');
+    bulletsUpP1.setAll('anchor.x', 0.5);
+    bulletsUpP1.setAll('anchor.y', 1);
+    bulletsUpP1.setAll('outOfBoundsKill', true);
+    bulletsUpP1.setAll('checkWorldBounds', true);
+
+    //  Our bullet group
+    bulletsLeftP1 = game.add.group();
+    bulletsLeftP1.enableBody = true;
+    bulletsLeftP1.physicsBodyType = Phaser.Physics.ARCADE;
+    bulletsLeftP1.createMultiple(30, 'bulletLeft');
+    bulletsLeftP1.setAll('anchor.x', 0.5);
+    bulletsLeftP1.setAll('anchor.y', 1);
+    bulletsLeftP1.setAll('outOfBoundsKill', true);
+    bulletsLeftP1.setAll('checkWorldBounds', true);
+
+    //  Our bullet group
+    bulletsDownP1 = game.add.group();
+    bulletsDownP1.enableBody = true;
+    bulletsDownP1.physicsBodyType = Phaser.Physics.ARCADE;
+    bulletsDownP1.createMultiple(30, 'bulletDown');
+    bulletsDownP1.setAll('anchor.x', 0.5);
+    bulletsDownP1.setAll('anchor.y', 1);
+    bulletsDownP1.setAll('outOfBoundsKill', true);
+    bulletsDownP1.setAll('checkWorldBounds', true);
+    
+    
+    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+
+    //here is the top
+    for (var i = 0; i < 12; i++) {
+        var top = platforms.create(50 * i, 0, 'ice');
+        var ground = platforms.create(50 * i, game.world.height - 26, 'ice');
+        if (i==11){
+            top.scale.setTo(0.098, 0.1 );   
+            ground.scale.setTo(0.098, 0.1 ); 
+        }else{
+            top.scale.setTo(0.1, 0.1 );
+            ground.scale.setTo(0.1, 0.1 );
+        }
+        top.body.immovable = true;
+        ground.body.immovable = true;
+    }
+    //now here we finish the top
+
+    //here we start the ledges
+
+    //ledge 1 from top
+    ledge = platforms.create(100, 25, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(100, 75, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    //ledge 2 from middle to bottom
+
+    ledge = platforms.create(175, 75, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(175, 125, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(175, 175, 'iceUp');
+    ledge.scale.setTo(0.1,0.1);
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(175, 325, 'iceUp');
+    ledge.scale.setTo(0.1,0.098);
+    ledge.body.immovable = true;
+
+
+    // The player and its settings
+    player1 = game.add.sprite(32, game.world.height - 150, 'blueTank');
+    player1.scale.setTo(0.6,0.6);
+
+    player2 = game.add.sprite(332, game.world.height - 150, 'blueTank');
+    player2.scale.setTo(0.6,0.6);
+
+    //  We need to enable physics on the player
+    game.physics.arcade.enable(player1);
+    game.physics.arcade.enable(player2);
+
+    //  Player physics properties. Give the little guy a slight bounce.
+    //player.body.bounce.y = 0.2;
+    //player.body.gravity.y = 300;
+    player1.body.collideWorldBounds = true;
+    player2.body.collideWorldBounds = true;
+
+    //  Our two animations, walking left and right.
+    player1.animations.add('left', [2], 10, true);
+    player1.animations.add('right', [0], 10, true);
+    player1.animations.add('down', [1], 10, true);
+    player1.animations.add('up', [3], 10, true);
+    player1.player = 1;
+
+    player2.animations.add('left', [2], 10, true);
+    player2.animations.add('right', [0], 10, true);
+    player2.animations.add('down', [1], 10, true);
+    player2.animations.add('up', [3], 10, true);
+    player2.player = 2;
+
+
+
+
+    //var tank = game.add.sprite(0, 0, 'tank1');
+    //tank.scale.setTo(0.1,0.1);
+
+    cursors = game.input.keyboard.createCursorKeys();
+    fire1ButtonP1 = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    fire2ButtonP2 = game.input.keyboard.addKey(Phaser.Keyboard.X);
+
+
+
+    stars = game.add.group();
+
+    stars.enableBody = true;
+
+    //  Here we'll create 12 of them evenly spaced apart
+    for (var i = 4; i < 9; i++)
+    {
+        //  Create a star inside of the 'stars' group
+        var star = stars.create(i * 60, i*25, 'laser');
+
+        //  Let gravity do its thing
+       // star.body.gravity.y = 6;
+
+        star.scale.setTo(0.5,0.5);
+        star.body.immovable = true;
+        //  This just gives each star a slightly random bounce value
+        //star.body.bounce.y = 0.7 + Math.random() * 0.2;
+    }
+}
+
+var score = 0;
+var scoreText;
+var tank1 = {
+    player : 1,
+    life : 4,
+    superShot : 1,
+};
+var tank2 = {
+    player : 2,
+    life : 4,
+    superShot : 0,
+}
+
+var bulletTime = 0;
+function update() {
+    //  Collide the player and the stars with the platforms
+    var hitPlatform = game.physics.arcade.collide(player1, platforms);
+    var hitPlatform = game.physics.arcade.collide(player2, platforms);
+    var touchesStar = game.physics.arcade.collide(stars, platforms);
+    var touchesStar = game.physics.arcade.collide(player1, player2);
+     //  Reset the players velocity (movement)
+    //player.body.velocity.x = 0;
+    //player.body.velocity.y = 0;
+
+    //  Reset the player, then check for movement keys
+    player1.body.velocity.setTo(0, 0);
+    player2.body.velocity.setTo(0, 0);
+    var direction = "";
+    game.physics.arcade.overlap(player1, stars, collectStar, null, this);
+    game.physics.arcade.overlap([bullets,bulletsUp, bulletsDown,bulletsLeft], platforms, destroyBullet, null, this);
+    game.physics.arcade.overlap([bullets,bulletsUp, bulletsDown,bulletsLeft], player2, destroyTank1, null, this);
+    //game.physics.arcade.overlap([bullets,bulletsUp, bulletsDown,bulletsLeft], player2, destroyTank2, null, this);
+    //game.physics.arcade.overlap(player1, player2, destroyBullet, null, this);
+
+    var directionP1 = controlsP1();
+    var directionP2 = controlsP2();
+
+    if (fire1ButtonP1.isDown)
+        {
+            fireBullet(player1, directionP1);
+        }
+    if(fire2ButtonP2.isDown){
+        fireBullet(player2, directionP2);
+    }
+
+    //  Allow the player to jump if they are touching the ground.
+    if (cursors.up.isDown && player1.body.touching.down && hitPlatform)
+    {
+        player1.body.velocity.y = -350;
+    }
+}
+
+function collectStar (player, star) {
+
+    // Removes the star from the screen
+    star.kill();
+
+    //  Add and update the score
+    score += 10;
+    scoreText.text = 'score: ' + score;
+
+}
+
+function destroyTank2(player, bullets ){
+    if(game.physics.arcade.collide(bullets, player2)){
+        player2.kill();
+        bullets.kill();
+
+    }
+}
+
+function destroyTank1(player, bullets ){
+    if(game.physics.arcade.collide(bullets, player2)){
+        player2.kill();
+        bullets.kill();
+    }
+}
+
+function destroyBullet(bullets, platforms){
+    bullets.kill();
+}
+
+function controlsP1(){
+    if (cursors.left.isDown)    
+    {
+        //  Move to the left
+        player1.body.velocity.x = -100;
+
+        player1.animations.play('left');
+        direction = "left";
+    }
+    else if (cursors.right.isDown)
+    {
+        //  Move to the right
+        player1.body.velocity.x = 100;
+
+        player1.animations.play('right');
+        direction = "right";
+    }
+    else if (cursors.up.isDown)
+    {
+        //  Move to the right
+        player1.body.velocity.y = -100;
+
+        player1.animations.play('up');
+        direction = "up";
+    }
+    else if (cursors.down.isDown)
+    {
+        //  Move to the right
+        player1.body.velocity.y = 100;
+
+        player1.animations.play('down');
+        direction = "down";
+    }
+    else
+    {
+        //  Stand still
+        player1.animations.stop();
+        direction = "";
+        player1.frame = 4;
+    }
+    return direction;
+}
+
+function controlsP2(){
+    if(player2.alive){
+
+    if (game.input.keyboard.addKey(Phaser.Keyboard.A).isDown)    
+    {
+        //  Move to the left
+        player2.body.velocity.x = -100;
+
+        player2.animations.play('left');
+        direction = "left";
+    }
+    else if (game.input.keyboard.addKey(Phaser.Keyboard.D).isDown)
+    {
+        //  Move to the right
+        player2.body.velocity.x = 100;
+
+        player2.animations.play('right');
+        direction = "right";
+    }
+    else if (game.input.keyboard.addKey(Phaser.Keyboard.W).isDown)
+    {
+        //  Move to the right
+        player2.body.velocity.y = -100;
+
+        player2.animations.play('up');
+        direction = "up";
+    }
+    else if (game.input.keyboard.addKey(Phaser.Keyboard.S).isDown)
+    {
+        //  Move to the right
+        player2.body.velocity.y = 100;
+
+        player2.animations.play('down');
+        direction = "down";
+    }
+    else
+    {
+        //  Stand still
+        player2.animations.stop();
+        direction = "";
+        player2.frame = 4;
+    }
+    }
+
+    return direction;
+}
+
+
+function fireBullet (player, direction) {
+
+    if((player2.alive && player == player2) || (player1.alive && player == player1)){
+        //  To avoid them being allowed to fire too fast we set a time limit
+    if (game.time.now > bulletTime)
+    {
+        //  Grab the first bullet we can from the pool
+        //bullet = bulletsUp.getFirstExists(false);
+        if (true)
+        {
+            //  And fire it
+            //bullet.reset(player.x + 15, player.y + 25);
+
+            if(direction=="left"){
+                bullet = bulletsLeft.getFirstExists(false);
+                bullet.reset(player.x + 15, player.y + 25);
+                bullet.body.velocity.x = -200; 
+           } else if (direction=="up"){
+                bullet = bulletsUp.getFirstExists(false);
+                bullet.reset(player.x + 15, player.y + 25);
+                bullet.body.velocity.y = -200; 
+           } else if (direction=="right"){
+                bullet = bullets.getFirstExists(false);
+                bullet.reset(player.x + 15, player.y + 25);
+                bullet.body.velocity.x = 200; 
+           } else if (direction=="down"){
+                bullet = bulletsDown.getFirstExists(false);
+                bullet.reset(player.x + 15, player.y + 25);
+                bullet.body.velocity.y = 200; 
+           } else {
+                bullet = bullets.getFirstExists(false);
+                bullet.reset(player.x + 15, player.y + 25);
+                bullet.body.velocity.x = 200; 
+           }
+            
+            bulletTime = game.time.now + 300;
+        }
+    }
+
+    }
+    
+}
+
+function resetBullet (bullet) {
+
+    //  Called if the bullet goes out of the screen
+    bullet.kill();
+
+}
+
+    };
+
+    </script>
+
+    </body>
+</html>
