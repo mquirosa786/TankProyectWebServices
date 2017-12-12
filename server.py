@@ -247,52 +247,6 @@ def setDirection(direction):
         return setDirection(direction)
     return  newDirection
 
-@app.route('/getfile', methods=['GET', 'POST'])
-def getfile():
-    if request.method == 'POST':
-        cVerbos, cConjunciones, cPronombres, cArticulos = inicializarContadores()
-        test = request.files['myfile']
-        r_server = redis.Redis("192.168.0.14")
-        data = test.readlines();
-        for line in data:
-            words = line.split()
-            for word in words:
-                wordRaw = str(word.decode('latin-1')).lower()
-                if r_server.exists(wordRaw):
-                    tipo = r_server.get(wordRaw).decode('latin-1')
-                    cVerbos2, cConjunciones2, cPronombres2, cArticulos2 = verificar(tipo)
-                    print(cVerbos2, cConjunciones2, cPronombres2, cArticulos2)
-                    cVerbos += cVerbos2
-                    cConjunciones += cConjunciones2
-                    cPronombres += cPronombres2
-                    cArticulos += cArticulos2
-                else:
-                    print('does not exist')
-
-
-        return render_template("chart.html", cVerbos=cVerbos, cConjunciones=cConjunciones,cPronombres=cPronombres, cArticulos=cArticulos)
-    else:
-        return 'ERROR, metodo utilizado para acceder no es reconocido'
-
-def verificar(tipo):
-    cVerbos, cConjunciones, cPronombres, cArticulos = 0,0,0,0
-    if tipo == 'verbos':
-        cVerbos = 1
-    elif tipo == 'articulos':
-        cArticulos = 1
-    elif tipo == 'conjunciones':
-        cConjunciones = 1
-    elif tipo == 'pronombres':
-        cPronombres = 1
-    return cVerbos, cConjunciones,cPronombres,cArticulos
-
-def inicializarContadores():
-    cVerbos = 0;
-    cConjunciones = 0;
-    cPronombres = 0;
-    cArticulos = 0;
-    return cVerbos, cConjunciones,cPronombres,cArticulos
-
 @app.route('/')
 @requires_auth
 def hello():
